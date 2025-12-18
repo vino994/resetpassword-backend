@@ -37,12 +37,8 @@ export const login = async (req, res) => {
   }
 };
 
-
-// FORGOT PASSWORD
 export const forgotPassword = async (req, res) => {
   try {
-    console.log("FORGOT PASSWORD HIT");
-
     const { email } = req.body;
     const user = await User.findOne({ email });
 
@@ -53,37 +49,35 @@ export const forgotPassword = async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
 
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.resetTokenExpire = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    const frontendURL =
-      process.env.FRONTEND_URL || "http://localhost:5173";
-
+    const frontendURL = process.env.FRONTEND_URL;
     const resetLink = `${frontendURL}/reset-password/${token}`;
 
-    // TRY EMAIL (OPTIONAL)
+    // TRY EMAIL, BUT DON'T FAIL API
     try {
       await sendEmail(
         email,
         "Password Reset",
-        `<p>Click to reset password:</p>
-         <a href="${resetLink}">${resetLink}</a>`
+        `<p>Click here:</p><a href="${resetLink}">${resetLink}</a>`
       );
-      console.log("Email sent successfully");
     } catch (emailErr) {
-      console.log("⚠️ Email skipped (Render SMTP blocked)");
+      console.log("⚠️ Email failed, continuing:", emailErr.message);
     }
 
     // ✅ ALWAYS RETURN SUCCESS
     return res.json({
-      msg: "Password reset link generated",
-      resetLink, // VERY IMPORTANT FOR GUVI
+      msg: "Reset link generated",
+      resetLink
     });
+
   } catch (err) {
     console.error("FORGOT ERROR:", err);
-    res.status(500).json({ msg: "Server error" });
+    return res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 
 
