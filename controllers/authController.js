@@ -40,44 +40,43 @@ export const login = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
 
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
 
     const token = crypto.randomBytes(32).toString("hex");
-
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 60 * 60 * 1000; // 1 hour
-
+    user.resetTokenExpire = Date.now() + 30 * 60 * 1000; // ⬅ 30 mins
     await user.save();
 
-    const frontendURL = process.env.FRONTEND_URL;
+    const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${frontendURL}/reset-password/${token}`;
 
-    // TRY EMAIL, BUT DON'T FAIL API
     try {
       await sendEmail(
         email,
         "Password Reset",
-        `<p>Click here:</p><a href="${resetLink}">${resetLink}</a>`
+        `<p>Click below to reset password</p>
+         <a href="${resetLink}">${resetLink}</a>`
       );
-    } catch (emailErr) {
-      console.log("⚠️ Email failed, continuing:", emailErr.message);
+    } catch (err) {
+      console.log("⚠️ Email failed:", err.message);
     }
 
-    // ✅ ALWAYS RETURN SUCCESS
-    return res.json({
+    // ✅ ALWAYS return resetLink
+    res.json({
       msg: "Reset link generated",
-      resetLink
+      resetLink,
     });
 
   } catch (err) {
     console.error("FORGOT ERROR:", err);
-    return res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 
 
