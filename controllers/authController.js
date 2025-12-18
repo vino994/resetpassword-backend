@@ -49,7 +49,8 @@ export const forgotPassword = async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
 
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 10 * 60 * 1000;
+    user.resetTokenExpire = Date.now() + 60 * 60 * 1000; // 1 hour
+
     await user.save();
 
     const frontendURL = process.env.FRONTEND_URL;
