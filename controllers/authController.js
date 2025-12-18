@@ -3,40 +3,49 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
 
-// REGISTER
+// ================= REGISTER =================
 export const register = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ msg: "User already exists" });
+    if (exists) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     await User.create({ email, password: hashed });
 
     res.json({ msg: "User registered successfully" });
   } catch (err) {
+    console.error("REGISTER ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
 
-// LOGIN
+// ================= LOGIN =================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!match) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     res.json({ msg: "Login successful" });
-  } catch {
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
 
+// ================= FORGOT PASSWORD =================
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -48,41 +57,35 @@ export const forgotPassword = async (req, res) => {
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 30 * 60 * 1000; // ⬅ 30 mins
+    user.resetTokenExpire = Date.now() + 30 * 60 * 1000; // 30 mins
     await user.save();
 
-    const frontendURL = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendURL =
+      process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${frontendURL}/reset-password/${token}`;
 
-    try {
-      await sendEmail(
-        email,
-        "Password Reset",
-        `<p>Click below to reset password</p>
-         <a href="${resetLink}">${resetLink}</a>`
-      );
-    } catch (err) {
-      console.log("⚠️ Email failed:", err.message);
-    }
+    // 🚀 DO NOT AWAIT EMAIL (NON-BLOCKING)
+    sendEmail(
+      email,
+      "Password Reset",
+      `<p>Click below to reset password</p>
+       <a href="${resetLink}">${resetLink}</a>`
+    ).catch((err) =>
+      console.log("⚠️ Email failed (ignored):", err.message)
+    );
 
-    // ✅ ALWAYS return resetLink
+    // ✅ ALWAYS RESPOND FAST
     res.json({
       msg: "Reset link generated",
       resetLink,
     });
-
   } catch (err) {
     console.error("FORGOT ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
 
-
-
-
-
-
-// RESET PASSWORD
+// ================= RESET PASSWORD =================
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
@@ -90,10 +93,12 @@ export const resetPassword = async (req, res) => {
 
     const user = await User.findOne({
       resetToken: token,
-      resetTokenExpire: { $gt: Date.now() }
+      resetTokenExpire: { $gt: Date.now() },
     });
 
-    if (!user) return res.status(400).json({ msg: "Token invalid or expired" });
+    if (!user) {
+      return res.status(400).json({ msg: "Token invalid or expired" });
+    }
 
     user.password = await bcrypt.hash(password, 10);
     user.resetToken = undefined;
@@ -101,7 +106,8 @@ export const resetPassword = async (req, res) => {
     await user.save();
 
     res.json({ msg: "Password reset successful" });
-  } catch {
+  } catch (err) {
+    console.error("RESET ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
