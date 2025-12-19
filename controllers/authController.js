@@ -57,33 +57,30 @@ export const forgotPassword = async (req, res) => {
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 30 * 60 * 1000; // 30 mins
+    user.resetTokenExpire = Date.now() + 30 * 60 * 1000;
     await user.save();
 
-    const frontendURL =
-      process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendURL = process.env.FRONTEND_URL;
     const resetLink = `${frontendURL}/reset-password/${token}`;
 
-    // 🚀 DO NOT AWAIT EMAIL (NON-BLOCKING)
-    sendEmail(
+    await sendEmail(
       email,
-      "Password Reset",
-      `<p>Click below to reset password</p>
-       <a href="${resetLink}">${resetLink}</a>`
-    ).catch((err) =>
-      console.log("⚠️ Email failed (ignored):", err.message)
+      "Reset Your Password",
+      `
+        <h3>Password Reset</h3>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 30 minutes.</p>
+      `
     );
 
-    // ✅ ALWAYS RESPOND FAST
-    res.json({
-      msg: "Reset link generated",
-      resetLink,
-    });
+    res.json({ msg: "Password reset link sent to your email" });
   } catch (err) {
     console.error("FORGOT ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 // ================= RESET PASSWORD =================
 export const resetPassword = async (req, res) => {
