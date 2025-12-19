@@ -67,32 +67,27 @@ await sendEmail(
   email,
   "Reset Your Password",
   `
-  <div style="font-family: Arial, sans-serif;">
+  <div style="font-family: Arial, sans-serif; line-height:1.6;">
     <h2>Password Reset</h2>
     <p>You requested to reset your password.</p>
 
     <p>
-      <a href="${resetLink}"
-         style="
-           display: inline-block;
-           padding: 12px 20px;
-           background-color: #4f46e5;
-           color: #ffffff;
-           text-decoration: none;
-           border-radius: 5px;
-           font-weight: bold;
-         ">
-        Reset Password
+      <a href="${resetLink}" target="_blank">
+        👉 Click here to reset your password
       </a>
     </p>
 
-    <p>If the button doesn’t work, copy and paste this link:</p>
-    <p style="word-break: break-all;">${resetLink}</p>
+    <p>If the link does not open, copy and paste this URL into your browser:</p>
+
+    <p style="word-break: break-all;">
+      ${resetLink}
+    </p>
 
     <p>This link expires in 30 minutes.</p>
   </div>
   `
 );
+
 
 
     res.json({ msg: "Password reset link sent to your email" });
