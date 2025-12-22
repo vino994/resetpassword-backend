@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://reset-frontend-mm6kcykwe-vinothkumar-sanjeevis-projects.vercel.app"
+    "https://reset-frontend-zeta.vercel.app/login"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
