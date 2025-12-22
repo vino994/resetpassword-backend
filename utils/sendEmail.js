@@ -8,6 +8,7 @@ apiKey.apiKey = process.env.BREVO_API_KEY;
 
 const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
+
 const sendEmail = async (to, subject, html) => {
   try {
     await tranEmailApi.sendTransacEmail({

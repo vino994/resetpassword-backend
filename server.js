@@ -7,15 +7,34 @@ import authRoutes from "./routes/authRoutes.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+/* ✅ CORS – Express v5 SAFE */
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://reset-frontend-mm6kcykwe-vinothkumar-sanjeevis-projects.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+/* 🔥 IMPORTANT: this handles OPTIONS automatically */
 app.use(express.json());
 
-// DB connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.error(err));
+/* Health check */
+app.get("/api/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
-// Routes
+/* MongoDB */
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.error("MongoDB Error:", err.message));
+
+/* Routes */
 app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
