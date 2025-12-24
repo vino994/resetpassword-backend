@@ -6,7 +6,13 @@ import sendEmail from "../utils/sendEmail.js";
 // ================= REGISTER =================
 export const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    email = email.trim().toLowerCase();
+
+    if (!email || !password) {
+      return res.status(400).json({ msg: "All fields required" });
+    }
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -22,6 +28,7 @@ export const register = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
 
 // ================= LOGIN =================
 export const login = async (req, res) => {
@@ -114,8 +121,9 @@ export const resetPassword = async (req, res) => {
     }
 
     user.password = await bcrypt.hash(password, 10);
-    user.resetToken = undefined;
-    user.resetTokenExpire = undefined;
+    user.resetToken = null;
+    user.resetTokenExpire = null;
+
     await user.save();
 
     res.json({ msg: "Password reset successful" });
@@ -124,3 +132,4 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
