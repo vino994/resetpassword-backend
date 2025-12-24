@@ -29,21 +29,16 @@ export const register = async (req, res) => {
   }
 };
 
-
 // ================= LOGIN =================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ msg: "Invalid credentials" });
-    }
+    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).json({ msg: "Invalid credentials" });
-    }
+    if (!match) return res.status(400).json({ msg: "Invalid credentials" });
 
     res.json({ msg: "Login successful" });
   } catch (err) {
@@ -58,44 +53,27 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
+    if (!user) return res.status(404).json({ msg: "User not found" });
 
     const token = crypto.randomBytes(32).toString("hex");
+
     user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 30 * 60 * 1000;
+    user.resetTokenExpire = new Date(Date.now() + 30 * 60 * 1000); // ✅ FIX
     await user.save();
 
-    const frontendURL = process.env.FRONTEND_URL;
-    const resetLink = `${frontendURL}/reset-password/${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-await sendEmail(
-  email,
-  "Reset Your Password",
-  `
-  <div style="font-family: Arial, sans-serif; line-height:1.6;">
-    <h2>Password Reset</h2>
-    <p>You requested to reset your password.</p>
-
-    <p>
-      <a href="${resetLink}" target="_blank">
-        👉 Click here to reset your password
-      </a>
-    </p>
-
-    <p>If the link does not open, copy and paste this URL into your browser:</p>
-
-    <p style="word-break: break-all;">
-      ${resetLink}
-    </p>
-
-    <p>This link expires in 30 minutes.</p>
-  </div>
-  `
-);
-
-
+    await sendEmail(
+      email,
+      "Reset Your Password",
+      `
+      <h2>Password Reset</h2>
+      <p>
+        <a href="${resetLink}">Click here to reset password</a>
+      </p>
+      <p>This link expires in 30 minutes</p>
+      `
+    );
 
     res.json({ msg: "Password reset link sent to your email" });
   } catch (err) {
@@ -103,7 +81,6 @@ await sendEmail(
     res.status(500).json({ msg: "Server error" });
   }
 };
-
 
 // ================= RESET PASSWORD =================
 export const resetPassword = async (req, res) => {
@@ -113,7 +90,7 @@ export const resetPassword = async (req, res) => {
 
     const user = await User.findOne({
       resetToken: token,
-      resetTokenExpire: { $gt: Date.now() },
+      resetTokenExpire: { $gt: new Date() }, // ✅ FIX
     });
 
     if (!user) {
@@ -123,7 +100,6 @@ export const resetPassword = async (req, res) => {
     user.password = await bcrypt.hash(password, 10);
     user.resetToken = null;
     user.resetTokenExpire = null;
-
     await user.save();
 
     res.json({ msg: "Password reset successful" });
@@ -132,4 +108,3 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
-
