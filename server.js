@@ -8,33 +8,33 @@ dotenv.config();
 
 const app = express();
 
-/* ✅ CORS – Express v5 SAFE */
+/* ✅ CORS – FIXED */
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://reset-frontend-zeta.vercel.app/login"
+    "https://reset-frontend-zeta.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
-/* 🔥 IMPORTANT: this handles OPTIONS automatically */
+/* ✅ JSON middleware */
 app.use(express.json());
 
-/* Health check */
+/* ✅ Health check */
 app.get("/api/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-/* MongoDB */
+/* ✅ MongoDB */
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000
 })
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.error("MongoDB Error:", err.message));
 
-/* Routes */
+/* ✅ Routes */
 app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
